@@ -2,38 +2,378 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>YurchikAI Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YurchikAI - Ваш умный ассистент</title>
     <style>
-        body { font-family: sans-serif; background: #e5ddd5; display: flex; flex-direction: column; height: 100vh; margin: 0; }
-        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .message { padding: 10px 15px; border-radius: 15px; max-width: 70%; font-size: 14px; }
-        .user { align-self: flex-end; background: #dcf8c6; }
-        .ai { align-self: flex-start; background: white; }
-        
-        /* Стили прогресс-бара */
-        #training-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        #progress-container { width: 300px; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #ccc; }
-        #progress-bar { width: 0%; height: 100%; background: #128c7e; transition: width 0.1s; }
-        
-        .input-area { background: white; padding: 15px; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
-        button { background: #128c7e; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        :root {
+            --bg-color: #141417;
+            --chat-bg: #1c1c21;
+            --header-bg: #1c1c21;
+            --user-msg-bg: #600d00;
+            --ai-msg-bg: #2d2d35;
+            --text-color: #e0e0e0;
+            --input-bg: #2d2d35;
+            --accent-color: #4f36f5;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Шапка сайта */
+        header {
+            background-color: var(--header-bg);
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background-color: var(--accent-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 0 15px rgba(245, 80, 54, 0.4);
+        }
+
+        .brand-name {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-sub {
+            color: #888;
+            font-size: 14px;
+            margin-left: 5px;
+            font-weight: normal;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #4caf50;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #4caf50;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #4caf50;
+        }
+
+        /* Область чата */
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        /* Тонкий скроллбар */
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: #333;
+            border-radius: 3px;
+        }
+
+        /* Пузыри сообщений */
+      .msg-wrapper {
+    display: flex;
+    flex-direction: column; /* Текст и время друг под другом */
+    width: 100%;
+    margin-bottom: 6px; /* Расстояние между сообщениями */
+}
+
+        .msg-wrapper.user {
+            justify-content: flex-end;
+        }
+
+        .msg-wrapper.ai {
+            justify-content: flex-start;
+        }
+
+.msg {
+    width: fit-content;
+    display: inline-block;
+    max-width: 80%;
+    /* Уменьшаем вертикальный отступ (первое число) в 2.5 раза */
+    /* Было 14px 18px, делаем 5px 15px */
+    padding: 5px 15px;  
+    
+    /* Уменьшаем высоту строки, чтобы текст сидел плотнее */
+    line-height: 1.2; 
+    
+    /* Слегка уменьшим скругление для маленьких блоков */
+    border-radius: 12px; 
+    
+    font-size: 14px; /* Можно чуть уменьшить шрифт для компактности */
+    position: relative;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+        .user .msg {
+    background-color: var(--user-msg-bg);
+    color: white;
+    border-bottom-right-radius: 2px; /* Острый уголок */
+}
+
+        .ai .msg {
+    background-color: var(--ai-msg-bg);
+    color: var(--text-color);
+    border-bottom-left-radius: 2px; /* Острый уголок */
+}
+
+        .msg-info {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+    padding: 0 4px;
+}
+
+        .user .msg-info {
+            text-align: right;
+            margin-right: 5px;
+        }
+
+        .ai .msg-info {
+            text-align: left;
+            margin-left: 5px;
+        }
+
+        /* Загрузка */
+        .loading {
+            font-style: italic;
+            color: #ffffff;
+            font-size: 18px;
+            display: none;
+            margin-left: 10px;
+        }
+
+        /* Область ввода */
+        #input-area {
+            background-color: var(--chat-bg);
+            padding: 20px 25px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #user-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        #send-btn {
+            padding: 15px 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #send-btn:hover {
+            background-color: #d4442e;
+        }
+
+        #send-btn:active {
+            transform: scale(0.97);
+        }
+
+        .error {
+            color: #ff5f5f;
+            background: rgba(255, 95, 95, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #ff5f5f;
+            margin: 10px 0;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 600px) {
+            .msg { max-width: 85%; }
+            #input-area { padding: 15px; }
+            .brand-sub { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div id="training-overlay">
-    <div id="status-text">Загрузка базы знаний...</div>
-    <div id="progress-container"><div id="progress-bar"></div></div>
+<header>
+    <div class="logo-container">
+        <div class="logo-icon">🤖</div>
+        <div class="brand-name">Yurchik<span style="color:var(--accent-color)">AI</span> <span class="brand-sub">(Юрчик ИИ)</span></div>
+    </div>
+    <div class="status">
+        <div class="status-dot"></div>
+        Юрчик ИИ на связи
+    </div>
+</header>
+
+<div id="chat-container">
+    <div class="msg-wrapper ai">
+        <div class="msg">YurchikAI вас внимательно слушает.</div>
+    </div>
 </div>
 
-<div id="chat-container"></div>
-<div class="input-area">
-    <input type="text" id="userInput" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">Отправить</button>
+<div class="loading" id="loading-indicator">Юрчик думает... (он не умеет)</div>
+
+<div id="input-area">
+    <input type="text" id="user-input" placeholder="Введите ваше сообщение сюда..." autocomplete="off">
+    <button id="send-btn">📤</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-<script src="app.js"></script>
+<script>
+    // === КОНФИГУРАЦИЯ ===
+    // ВСТАВЬТЕ СВОЙ КЛЮЧ GROQ НИЖЕ
+
+    const API_KEY = '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';
+    const MODEL = "llama-3.1-8b-instant";
+    const SYSTEM_PROMPT = "Отвечай на русском языке. ПИШИ ТОЛЬКО ПРОСТЫМ ТЕКСТОМ. Не используй Markdown оформления (никаких **, #, `), не используй списки. Весь ответ должен быть в виде обычных абзацев текста. используй как можно меньше символов. ";
+
+    // === ЭЛЕМЕНТЫ ===
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const loadingIndicator = document.getElementById('loading-indicator');
+
+    // === ФУНКЦИИ ===
+    function getTime() {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+
+    function addMessageToChat(text, sender) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg-wrapper ${sender}`;
+        
+        const time = getTime();
+        const senderName = sender === 'user' ? 'Вы' : 'YurchikAI';
+
+        wrapper.innerHTML = `
+            <div class="msg">
+                ${text}
+                <span class="msg-info">${senderName} в ${time}</span>
+            </div>
+        `;
+        
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // 1. Добавляем сообщение пользователя
+        addMessageToChat(text, 'user');
+        userInput.value = '';
+        
+        // 2. Показываем загрузку
+        loadingIndicator.style.display = 'block';
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        try {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: MODEL, 
+                    messages: [
+                        {role: "system", content: SYSTEM_PROMPT},
+                        {role: "user", content: text}
+                    ],
+                    temperature: 0.7 // Немного креативности
+                })
+            });
+
+            const data = await response.json();
+            loadingIndicator.style.display = 'none';
+
+            if (data.error) {
+                chatContainer.innerHTML += `<div class="error">сообщи этот код юрчику, он починит все: ${data.error.message}</div>`;
+            } else {
+                // 3. Добавляем ответ AI
+                const aiText = data.choices[0].message.content;
+                addMessageToChat(aiText, 'ai');
+            }
+        } catch (error) {
+            loadingIndicator.style.display = 'none';
+            chatContainer.innerHTML += `<div class="error">у тебя интернета нету</div>`;
+        }
+        
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+    sendBtn.addEventListener('click', sendMessage);
+    
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Фокус на поле ввода при загрузке
+    userInput.focus();
+</script>
+
 </body>
 </html>
