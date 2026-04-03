@@ -2,24 +2,38 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>TFJS Sentiment AI</title>
+    <title>YurchikAI Pro</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f9; padding: 40px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; }
-        input { padding: 12px; border: 1px solid #ddd; border-radius: 5px; width: 250px; }
-        button { padding: 12px 20px; border: none; border-radius: 5px; background: #4CAF50; color: white; cursor: pointer; }
-        #status { margin-top: 15px; color: #666; font-style: italic; }
+        body { font-family: sans-serif; background: #e5ddd5; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .message { padding: 10px 15px; border-radius: 15px; max-width: 70%; font-size: 14px; }
+        .user { align-self: flex-end; background: #dcf8c6; }
+        .ai { align-self: flex-start; background: white; }
+        
+        /* Стили прогресс-бара */
+        #training-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        #progress-container { width: 300px; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #ccc; }
+        #progress-bar { width: 0%; height: 100%; background: #128c7e; transition: width 0.1s; }
+        
+        .input-area { background: white; padding: 15px; display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+        button { background: #128c7e; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>TensorFlow.js Анализатор</h2>
-        <input type="text" id="userInput" placeholder="Как дела?">
-        <button onclick="predict()">Анализ</button>
-        <div id="status">Загрузка TensorFlow...</div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-    <script src="app.js"></script>
+<div id="training-overlay">
+    <div id="status-text">Загрузка базы знаний...</div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+</div>
+
+<div id="chat-container"></div>
+<div class="input-area">
+    <input type="text" id="userInput" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()">Отправить</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+<script src="app.js"></script>
 </body>
 </html>

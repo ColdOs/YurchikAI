@@ -1,81 +1,114 @@
-let model;
-let wordIndex = {}; // Наш словарь (база знаний слов)
-const maxLen = 10;   // Максимальная длина фразы
+let model, wordIndex = {}, db = {};
+const maxLen = 10;
+const EPOCHS = 150;
 
-async function prepareData() {
-    const response = await fetch('data.json');
-    const data = await response.json();
+async function init() {
+    const bar = document.getElementById('progress-bar');
+    const statusText = document.getElementById('status-text');
+    const overlay = document.getElementById('training-overlay');
 
-    // 1. Создаем словарь уникальных слов
+    const res = await fetch('data.json');
+    db = await res.json();
+
     let currentIdx = 1;
-    data.forEach(item => {
-        item.input.split(' ').forEach(word => {
-            if (!wordIndex[word]) wordIndex[word] = currentIdx++;
+    const trainingInputs = [];
+    const trainingOutputs = [];
+
+    // Обучаем сеть только на ИНТЕНТАХ (типах фраз)
+    db.intents.forEach((intent, idx) => {
+        intent.patterns.forEach(phrase => {
+            const sequence = phrase.toLowerCase().split(' ').map(word => {
+                if (!wordIndex[word]) wordIndex[word] = currentIdx++;
+                return wordIndex[word];
+            });
+            while (sequence.length < maxLen) sequence.push(0);
+            trainingInputs.push(sequence);
+
+            const output = new Array(db.intents.length).fill(0);
+            output[idx] = 1;
+            trainingOutputs.push(output);
         });
     });
 
-    // 2. Превращаем текст в массивы чисел (Padding)
-    const inputs = data.map(item => {
-        const sequence = item.input.split(' ').map(word => wordIndex[word] || 0);
-        while (sequence.length < maxLen) sequence.push(0); // Добиваем нулями до maxLen
-        return sequence;
-    });
-
-    const outputs = data.map(item => item.output);
-
-    return {
-        x: tf.tensor2d(inputs),
-        y: tf.tensor2d(outputs, [outputs.length, 1])
-    };
-}
-
-async function createModel() {
     model = tf.sequential();
-    
-    // Слои нейросети
-    model.add(tf.layers.embedding({ inputDim: 100, outputDim: 8, inputLength: maxLen }));
-    model.add(tf.layers.flatten());
-    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+    model.add(tf.layers.embedding({ inputDim: currentIdx + 50, outputDim: 16, inputLength: maxLen }));
+    model.add(tf.layers.globalAveragePooling1d());
+    model.add(tf.layers.dense({ units: db.intents.length, activation: 'softmax' }));
+    model.compile({ optimizer: 'adam', loss: 'categoricalCrossentropy' });
 
-    model.compile({
-        optimizer: 'adam',
-        loss: 'binaryCrossentropy',
-        metrics: ['accuracy']
+    await model.fit(tf.tensor2d(trainingInputs), tf.tensor2d(trainingOutputs), {
+        epochs: EPOCHS,
+        callbacks: {
+            onEpochEnd: (epoch) => {
+                const percent = Math.round(((epoch + 1) / EPOCHS) * 100);
+                bar.style.width = percent + '%';
+                statusText.innerText = `Сборка модулей логики: ${percent}%`;
+            }
+        }
     });
+
+    overlay.style.display = 'none';
 }
 
-async function train() {
-    const status = document.getElementById('status');
-    const data = await prepareData();
-    await createModel();
-
-    status.innerText = "Обучение нейросети...";
-    
-    await model.fit(data.x, data.y, {
-    epochs: 200,          // Сколько раз прогнать через данные
-    batchSize: 4,         // Сколько примеров брать за один раз
-    shuffle: true,        // Перемешивать данные (очень важно!)
-    callbacks: {
-        onEpochEnd: (epoch, logs) => {
-            console.log(`Эпоха ${epoch}: Точность = ${logs.acc.toFixed(2)}`);
+// Функция поиска темы в тексте
+function findTopic(text) {
+    for (let topicName in db.topics) {
+        const keywords = db.topics[topicName];
+        if (keywords.some(keyword => text.includes(keyword))) {
+            return topicName;
         }
     }
-});
-
-    status.innerText = "Готов! Попробуйте ввести фразу из базы.";
+    return null;
 }
 
-window.predict = async function() {
-    const text = document.getElementById('userInput').value.toLowerCase();
-    const sequence = text.split(' ').map(word => wordIndex[word] || 0);
+window.sendMessage = async function() {
+    const inputEl = document.getElementById('userInput');
+    const rawText = inputEl.value.trim();
+    if (!rawText) return;
+
+    const text = rawText.toLowerCase();
+    appendMsg('user', rawText);
+    inputEl.value = '';
+
+    // 1. Определяем ТЕМУ простым поиском
+    const foundTopic = findTopic(text);
+
+    // 2. Определяем ИНТЕНТ через нейросеть
+    const tokens = text.replace(/[^\w\sа-яё]/gi, "").split(' ');
+    const sequence = tokens.map(w => wordIndex[w] || 0);
     while (sequence.length < maxLen) sequence.push(0);
 
-    const inputTensor = tf.tensor2d([sequence]);
-    const prediction = model.predict(inputTensor);
-    const score = (await prediction.data())[0];
+    const prediction = model.predict(tf.tensor2d([sequence]));
+    const results = await prediction.data();
+    const maxIdx = results.indexOf(Math.max(...results));
+    const confidence = results[maxIdx];
 
-    document.getElementById('status').innerText = 
-        score > 0.5 ? `😊 Позитив (${(score*100).toFixed(1)}%)` : `😞 Негатив (${(score*100).toFixed(1)}%)`;
+    setTimeout(() => {
+        let response;
+
+        if (confidence > 0.4) {
+            const intent = db.intents[maxIdx];
+            // Выбираем случайный шаблон для этого интента
+            let template = intent.templates[Math.floor(Math.random() * intent.templates.length)];
+            
+            // Если тема найдена — подставляем её, если нет — используем общую заглушку
+            const topicLabel = foundTopic ? foundTopic : "эти вещи";
+            response = template.replace("{topic}", topicLabel);
+        } else {
+            response = "Интересно... Расскажи подробнее, я фиксирую это в базе.";
+        }
+
+        appendMsg('ai', response);
+    }, 400);
 }
 
-train();
+function appendMsg(role, text) {
+    const chat = document.getElementById('chat-container');
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    div.innerText = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+init();
