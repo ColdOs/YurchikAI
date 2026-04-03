@@ -378,19 +378,16 @@ renderHistory();
     }
  }
 
- function clearChat() {
-    // 1. Очищаем массив истории в оперативной памяти
+function clearChat() {
+    // 1. Очищаем локальное хранилище (печеньки/localStorage)
+    localStorage.removeItem('yurchik_history');
+    
+    // 2. На всякий случай очищаем массив в памяти (хотя после релоада он и так обнулится)
     chatHistory = [];
 
-    // 2. Удаляем историю из локального хранилища браузера (localStorage)
-    localStorage.removeItem('yurchik_history');
-
-    // 3. Визуально удаляем все сообщения из контейнера чата
-    const chatBox = document.getElementById('chat-box');
-    chatBox.innerHTML = '';
-
-    // Опционально: можно добавить системное уведомление
-    console.log("Контекст сброшен");
+    // 3. Перезагружаем страницу
+    // Это мгновенно очистит экран и применит изменения
+    window.location.reload();
 }
 
 
