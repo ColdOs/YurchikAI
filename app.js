@@ -1,44 +1,81 @@
-// Используем LSTM для работы с текстом
-const net = new brain.recurrent.LSTM();
+let model;
+let wordIndex = {}; // Наш словарь (база знаний слов)
+const maxLen = 10;   // Максимальная длина фразы
 
-// Делаем функцию доступной глобально, чтобы onclick её видел
-window.predict = function() {
-    const input = document.getElementById('userInput').value.toLowerCase();
-    const resultDiv = document.getElementById('result');
-    
-    if (input.trim() === "") return;
+async function prepareData() {
+    const response = await fetch('data.json');
+    const data = await response.json();
 
-    try {
-        const output = net.run(input);
-        resultDiv.innerText = output === 'happy' ? "😊 Позитивно" : "😞 Негативно";
-    } catch (e) {
-        resultDiv.innerText = "Ошибка: Сеть еще не обучена.";
-    }
-}
-
-async function start() {
-    const resultDiv = document.getElementById('result');
-    
-    try {
-        // 1. Загружаем базу знаний
-        const response = await fetch('data.json');
-        const trainingData = await response.json();
-
-        resultDiv.innerText = "Обучение... подождите (10-20 сек)";
-
-        // 2. Обучаем сеть
-        await net.train(trainingData, {
-            iterations: 100,
-            errorThresh: 0.011,
-            log: true
+    // 1. Создаем словарь уникальных слов
+    let currentIdx = 1;
+    data.forEach(item => {
+        item.input.split(' ').forEach(word => {
+            if (!wordIndex[word]) wordIndex[word] = currentIdx++;
         });
+    });
 
-        resultDiv.innerText = "Готов к работе! Введите текст.";
-    } catch (error) {
-        resultDiv.innerText = "Ошибка загрузки данных или обучения. Проверьте консоль.";
-        console.error(error);
-    }
+    // 2. Превращаем текст в массивы чисел (Padding)
+    const inputs = data.map(item => {
+        const sequence = item.input.split(' ').map(word => wordIndex[word] || 0);
+        while (sequence.length < maxLen) sequence.push(0); // Добиваем нулями до maxLen
+        return sequence;
+    });
+
+    const outputs = data.map(item => item.output);
+
+    return {
+        x: tf.tensor2d(inputs),
+        y: tf.tensor2d(outputs, [outputs.length, 1])
+    };
 }
 
-// Запускаем процесс при загрузке страницы
-start();
+async function createModel() {
+    model = tf.sequential();
+    
+    // Слои нейросети
+    model.add(tf.layers.embedding({ inputDim: 100, outputDim: 8, inputLength: maxLen }));
+    model.add(tf.layers.flatten());
+    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+
+    model.compile({
+        optimizer: 'adam',
+        loss: 'binaryCrossentropy',
+        metrics: ['accuracy']
+    });
+}
+
+async function train() {
+    const status = document.getElementById('status');
+    const data = await prepareData();
+    await createModel();
+
+    status.innerText = "Обучение нейросети...";
+    
+    await model.fit(data.x, data.y, {
+    epochs: 200,          // Сколько раз прогнать через данные
+    batchSize: 4,         // Сколько примеров брать за один раз
+    shuffle: true,        // Перемешивать данные (очень важно!)
+    callbacks: {
+        onEpochEnd: (epoch, logs) => {
+            console.log(`Эпоха ${epoch}: Точность = ${logs.acc.toFixed(2)}`);
+        }
+    }
+});
+
+    status.innerText = "Готов! Попробуйте ввести фразу из базы.";
+}
+
+window.predict = async function() {
+    const text = document.getElementById('userInput').value.toLowerCase();
+    const sequence = text.split(' ').map(word => wordIndex[word] || 0);
+    while (sequence.length < maxLen) sequence.push(0);
+
+    const inputTensor = tf.tensor2d([sequence]);
+    const prediction = model.predict(inputTensor);
+    const score = (await prediction.data())[0];
+
+    document.getElementById('status').innerText = 
+        score > 0.5 ? `😊 Позитив (${(score*100).toFixed(1)}%)` : `😞 Негатив (${(score*100).toFixed(1)}%)`;
+}
+
+train();
