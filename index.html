@@ -258,6 +258,10 @@
         <div class="logo-icon">🤖</div>
         <div class="brand-name">Yurchik<span style="color:var(--accent-color)">AI</span> <span class="brand-sub">(Юрчик ИИ)</span></div>
     </div>
+    <button onclick="clearChat()" style="margin-bottom: 10px; background-color: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+    🗑️ Очистить чат
+</button>
+
     <div class="status">
         <div class="status-dot"></div>
         Юрчик ИИ на связи
@@ -373,6 +377,22 @@ renderHistory();
         console.error("Ошибка:", error);
     }
  }
+
+ function clearChat() {
+    // 1. Очищаем массив истории в оперативной памяти
+    chatHistory = [];
+
+    // 2. Удаляем историю из локального хранилища браузера (localStorage)
+    localStorage.removeItem('yurchik_history');
+
+    // 3. Визуально удаляем все сообщения из контейнера чата
+    const chatBox = document.getElementById('chat-box');
+    chatBox.innerHTML = '';
+
+    // Опционально: можно добавить системное уведомление
+    console.log("Контекст сброшен");
+}
+
 
     // === ОБРАБОТЧИКИ СОБЫТИЙ ===
     sendBtn.addEventListener('click', sendMessage);
