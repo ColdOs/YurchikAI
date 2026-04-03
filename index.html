@@ -258,7 +258,7 @@
         <div class="logo-icon">🤖</div>
         <div class="brand-name">Yurchik<span style="color:var(--accent-color)">AI</span> <span class="brand-sub">(Юрчик ИИ)</span></div>
     </div>
-    <button onclick="clearChat()" style="margin-bottom: 10px; background-color: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+    <button onclick="hardReload()" style="margin-bottom: 10px; background-color: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
     🗑️ Очистить чат
 </button>
 
@@ -407,6 +407,20 @@ function clearChat() {
     localStorage.removeItem(STORAGE_KEY);
     chatHistory = [];
     document.getElementById('chat-box').innerHTML = '';
+
+    function hardReload() {
+    // 1. Сначала очищаем данные (на всякий случай еще раз)
+    localStorage.removeItem('yurchik_history');
+    
+    // 2. Пробуем обновить страницу через стандартный метод
+    // true заставляет браузер обновить страницу с сервера, игнорируя кэш
+    location.reload(true);
+
+    // 3. Если первый метод не сработал (запасной вариант для мобайла),
+    // просто перенаправляем на тот же URL с добавлением случайного параметра,
+    // чтобы обмануть кэш Telegram
+    window.location.href = window.location.pathname + '?' + Date.now();
+}
 }
 
 
