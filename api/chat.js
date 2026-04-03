@@ -8,7 +8,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(req.body) // Пересылаем JSON из HTML "как есть"
+            body: JSON.stringify(req.body) 
         });
 
         const data = await response.json();

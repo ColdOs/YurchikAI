@@ -318,45 +318,50 @@
     async function sendMessage() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
-    if (!text) return;
+    
+    if (!text) return; // Не отправляем пустые сообщения
 
-    addMessageToChat(text, 'user'); // Твоя функция отрисовки
+    addMessageToChat(text, 'user');
     input.value = '';
 
-    try {
-        // СОБИРАЕМ JSON ПРЯМО ТУТ
-        const groqRequest = {
-            model: "llama-3.1-8b-instant",
-            messages: [
-                { 
-                    role: "system", 
-                    content: "Отвечай на русском языке. ПИШИ ТОЛЬКО ПРОСТЫМ ТЕКСТОМ без Markdown." 
-                },
-                { 
-                    role: "user", 
-                    content: text 
-                }
-            ],
-            temperature: 0.7
-        };
+    // Формируем объект строго по документации Groq
+    const payload = {
+        model: "llama-3.3-70b-versatile",
+        messages: [
+            { 
+                role: "system", 
+                content: "Отвечай на русском языке. Пиши только простым текстом без оформления." 
+            },
+            { 
+                role: "user", 
+                content: text // Проверь, что тут именно переменная text
+            }
+        ]
+    };
 
+    try {
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(groqRequest) // Отправляем готовый объект
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
-        
-        if (data.choices && data.choices[0]) {
-            const aiText = data.choices[0].message.content;
-            addMessageToChat(aiText, 'ai');
-        } else {
-            console.error("Странный ответ от API:", data);
+
+        if (data.error) {
+            console.error("Ошибка от Groq:", data.error);
+            // Если снова выскочит content is missing, мы увидим это в консоли
+            return;
         }
 
-    } catch (error) {
-        console.error("Ошибка:", error);
+        if (data.choices && data.choices[0]) {
+            const aiResponse = data.choices[0].message.content;
+            addMessageToChat(aiResponse, 'ai');
+        }
+    } catch (err) {
+        console.error("Сетевая ошибка:", err);
     }
 }
 
