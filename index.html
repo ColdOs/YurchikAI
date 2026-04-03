@@ -278,6 +278,10 @@
 </div>
 
 <script>
+
+    const STORAGE_KEY = 'yurchik_chat_history';
+
+    let chatHistory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     // === КОНФИГУРАЦИЯ ===
     // ВСТАВЬТЕ СВОЙ КЛЮЧ GROQ НИЖЕ
 
@@ -292,6 +296,14 @@
     const loadingIndicator = document.getElementById('loading-indicator');
 
     // === ФУНКЦИИ ===
+
+    function renderHistory() {
+    const chatBox = document.getElementById('chat-box');
+    chatBox.innerHTML = ''; // Очистка
+    chatHistory.forEach(msg => addMessageToChat(msg.content, msg.role === 'assistant' ? 'ai' : 'user'));
+}
+renderHistory();
+
     function getTime() {
         const now = new Date();
         return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -318,52 +330,46 @@
     async function sendMessage() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
-    
-    if (!text) return; // Не отправляем пустые сообщения
+    if (!text) return;
 
+    // 1. Добавляем сообщение пользователя в интерфейс и в историю
     addMessageToChat(text, 'user');
+    chatHistory.push({ role: "user", content: text });
     input.value = '';
 
-    // Формируем объект строго по документации Groq
-    const payload = {
-        model: "llama-3.1-8b-instant",
-        messages: [
-            { 
-                role: "system", 
-                content: "Отвечай на русском языке. Пиши только простым текстом без оформления." 
-            },
-            { 
-                role: "user", 
-                content: text // Проверь, что тут именно переменная text
-            }
-        ]
-    };
+    // Оставляем только последние 5 сообщений для экономии места и контекста
+    if (chatHistory.length > 5) {
+        chatHistory = chatHistory.slice(-5);
+    }
 
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { role: "system", content: "Отвечай кратко и по-русски. не используй оформление и списки." },
+                    ...chatHistory // Отправляем всю накопленную историю
+                ]
+            })
         });
 
         const data = await response.json();
+        const aiText = data.choices[0].message.content;
 
-        if (data.error) {
-            console.error("Ошибка от Groq:", data.error);
-            // Если снова выскочит content is missing, мы увидим это в консоли
-            return;
-        }
+        // 2. Добавляем ответ ИИ в интерфейс и в историю
+        addMessageToChat(aiText, 'ai');
+        chatHistory.push({ role: "assistant", content: aiText });
 
-        if (data.choices && data.choices[0]) {
-            const aiResponse = data.choices[0].message.content;
-            addMessageToChat(aiResponse, 'ai');
-        }
-    } catch (err) {
-        console.error("Сетевая ошибка:", err);
+        // Ограничиваем и сохраняем в localStorage
+        if (chatHistory.length > 5) chatHistory = chatHistory.slice(-5);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+
+    } catch (error) {
+        console.error("Ошибка:", error);
     }
-}
+ }
 
     // === ОБРАБОТЧИКИ СОБЫТИЙ ===
     sendBtn.addEventListener('click', sendMessage);
@@ -376,6 +382,14 @@
 
     // Фокус на поле ввода при загрузке
     userInput.focus();
+
+    function clearChat() {
+    localStorage.removeItem(STORAGE_KEY);
+    chatHistory = [];
+    document.getElementById('chat-box').innerHTML = '';
+}
+
+
 </script>
 
 </body>
