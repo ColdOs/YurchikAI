@@ -329,20 +329,12 @@
 
         try {
             const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: MODEL, 
-                    messages: [
-                        {role: "system", content: SYSTEM_PROMPT},
-                        {role: "user", content: text}
-                    ],
-                    temperature: 0.7 // Немного креативности
-                })
-            });
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message: text }) // Ключ должен называться 'message'
+});
 
             const data = await response.json();
             loadingIndicator.style.display = 'none';
