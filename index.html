@@ -249,18 +249,80 @@
             #input-area { padding: 15px; }
             .brand-sub { display: none; }
         }
+
+        .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Полупрозрачный фон */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Чтобы был поверх всего */
+}
+
+.promo-content {
+    background: #2c2c2e;
+    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    position: relative;
+    width: 85%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 35px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: white;
+}
+
+.promo-link {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 12px 24px;
+    background-color: #007aff;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
+
+    <div id="promo-overlay" class="overlay">
+    <div class="promo-content">
+        <span class="close-btn" onclick="closePromo()">&times;</span>
+        
+        <div class="promo-body">
+            <h2>Проект Товарища</h2>
+            <img src="https://via.placeholder.com/250x150" alt="Promo" style="width:100%; border-radius:10px;">
+            <p>Зацени крутой Open Source инструмент для разработчиков!</p>
+            <a href="https://github.com/friend/project" target="_blank" class="promo-link">Посмотреть на GitHub</a>
+        </div>
+    </div>
+</div>
 
 <header>
     <div class="logo-container">
         <div class="logo-icon">🤖</div>
         <div class="brand-name">Yurchik<span style="color:var(--accent-color)">AI</span> <span class="brand-sub">(Юрчик ИИ)</span></div>
     </div>
-    <button onclick="hardReload()" style="margin-bottom: 10px; background-color: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
-    🗑️ Очистить чат
-</button>
+
 
     <div class="status">
         <div class="status-dot"></div>
@@ -403,26 +465,20 @@ function clearChat() {
     // Фокус на поле ввода при загрузке
     userInput.focus();
 
-    function clearChat() {
-    localStorage.removeItem(STORAGE_KEY);
-    chatHistory = [];
-    document.getElementById('chat-box').innerHTML = '';
-
-    function hardReload() {
-    // 1. Сначала очищаем данные (на всякий случай еще раз)
-    localStorage.removeItem('yurchik_history');
     
-    // 2. Пробуем обновить страницу через стандартный метод
-    // true заставляет браузер обновить страницу с сервера, игнорируя кэш
-    location.reload(true);
 
-    // 3. Если первый метод не сработал (запасной вариант для мобайла),
-    // просто перенаправляем на тот же URL с добавлением случайного параметра,
-    // чтобы обмануть кэш Telegram
-    window.location.href = window.location.pathname + '?' + Date.now();
-}
+
+
+function closePromo() {
+    const promo = document.getElementById('promo-overlay');
+    if (promo) {
+        promo.style.display = 'none';
+    }
 }
 
+// Если хочешь, чтобы баннер появлялся не при каждой перезагрузке, 
+// а, например, раз в день, можно добавить проверку в localStorage.
+// Но пока оставим "при каждой загрузке", как ты просил.
 
 </script>
 
