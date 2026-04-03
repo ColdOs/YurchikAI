@@ -343,6 +343,10 @@ renderHistory();
         chatHistory = chatHistory.slice(-5);
     }
 
+    while (chatBox.children.length > 5) {
+        chatBox.removeChild(chatBox.firstChild);
+    }
+    
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
