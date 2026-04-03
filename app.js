@@ -1,28 +1,44 @@
-const net = new brain.recurrent.LSTM(); // Используем LSTM для работы с текстом
+// Используем LSTM для работы с текстом
+const net = new brain.recurrent.LSTM();
+
+// Делаем функцию доступной глобально, чтобы onclick её видел
+window.predict = function() {
+    const input = document.getElementById('userInput').value.toLowerCase();
+    const resultDiv = document.getElementById('result');
+    
+    if (input.trim() === "") return;
+
+    try {
+        const output = net.run(input);
+        resultDiv.innerText = output === 'happy' ? "😊 Позитивно" : "😞 Негативно";
+    } catch (e) {
+        resultDiv.innerText = "Ошибка: Сеть еще не обучена.";
+    }
+}
 
 async function start() {
-    const result Div = document.getElementById('result');
+    const resultDiv = document.getElementById('result');
     
-    // 1. Загружаем базу знаний
-    const response = await fetch('data.json');
-    const trainingData = await response.json();
+    try {
+        // 1. Загружаем базу знаний
+        const response = await fetch('data.json');
+        const trainingData = await response.json();
 
-    // 2. Обучаем сеть (это может занять 10-20 секунд)
-    net.train(trainingData, {
-        iterations: 100, // Количество проходов
-        errorThresh: 0.011,
-        log: true       // Видеть процесс в консоли браузера
-    });
+        resultDiv.innerText = "Обучение... подождите (10-20 сек)";
 
-    resultDiv.innerText = "Готов к работе!";
+        // 2. Обучаем сеть
+        await net.train(trainingData, {
+            iterations: 100,
+            errorThresh: 0.011,
+            log: true
+        });
+
+        resultDiv.innerText = "Готов к работе! Введите текст.";
+    } catch (error) {
+        resultDiv.innerText = "Ошибка загрузки данных или обучения. Проверьте консоль.";
+        console.error(error);
+    }
 }
 
-function predict() {
-    const input = document.getElementById('userInput').value.toLowerCase();
-    const output = net.run(input);
-    
-    document.getElementById('result').innerText = 
-        output === 'happy' ? "😊 Позитивно" : "🛰 Негативно";
-}
-
+// Запускаем процесс при загрузке страницы
 start();
