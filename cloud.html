@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yurchik Cloud — App Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #09090b;
+            color: #fafafa;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        header {
+            padding: 15px 20px;
+            background: #18181b;
+            border-bottom: 1px solid #27272a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+        #app-viewport {
+            flex-grow: 1;
+            background: #fff; /* Белый фон для превью приложений */
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .input-zone {
+            display: flex;
+            gap: 10px;
+            background: #18181b;
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid #27272a;
+        }
+        input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #3f3f46; cursor: not-allowed; }
+
+        /* Лоадер */
+        #loader {
+            display: none;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #3b82f6;
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight: bold; font-size: 20px;">☁️ Yurchik Cloud</div>
+    <div id="status" style="font-size: 12px; color: #71717a;">Готов к деплою</div>
+</header>
+
+<div class="container">
+    <div id="loader"><div class="spinner"></div></div>
+    <iframe id="app-viewport" title="App Preview"></iframe>
+
+    <div class="input-zone">
+        <input type="text" id="app-prompt" placeholder="Напиши: Синтезатор на JS или Игра Змейка...">
+        <button id="deploy-btn" onclick="deployApp()">Запустить</button>
+    </div>
+</div>
+
+<script>
+    async function deployApp() {
+        const input = document.getElementById('app-prompt');
+        const btn = document.getElementById('deploy-btn');
+        const viewport = document.getElementById('app-viewport');
+        const loader = document.getElementById('loader');
+        const status = document.getElementById('status');
+
+        if (!input.value.trim()) return;
+
+        btn.disabled = true;
+        loader.style.display = 'block';
+        status.innerText = 'Нейросеть пишет код...';
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { 
+                            role: "system", 
+                            content: "Ты — Fullstack разработчик. Генерируй ОДИН файл HTML, включающий JS. Твой ответ должен содержать ТОЛЬКО код приложения внутри блока ```html. Приложение должно быть красивым, современным и полностью рабочим." 
+                        },
+                        { role: "user", content: "Создай приложение: " + input.value }
+                    ]
+                })
+            });
+
+            const data = await response.json();
+            const text = data.choices[0].message.content;
+            const htmlMatch = text.match(/```html([\s\S]*?)```/);
+
+            if (htmlMatch && htmlMatch[1]) {
+                const pureHtml = htmlMatch[1].trim();
+                
+                // Магия деплоя: записываем код прямо в iframe
+                const blob = new Blob([pureHtml], { type: 'text/html' });
+                viewport.src = URL.createObjectURL(blob);
+                
+                status.innerText = 'Приложение запущено!';
+            } else {
+                status.innerText = 'Ошибка компиляции кода';
+            }
+        } catch (e) {
+            status.innerText = 'Ошибка сервера';
+        } finally {
+            loader.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
