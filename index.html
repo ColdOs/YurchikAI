@@ -435,7 +435,6 @@ renderHistory();
 
         // 2. Добавляем ответ ИИ в интерфейс и в историю
         addMessageToChat(aiText, 'ai');
-        speak(aiText); //озвучиваем ответ
         chatHistory.push({ role: "assistant", content: aiText });
 
   
