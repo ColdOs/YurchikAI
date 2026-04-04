@@ -93,61 +93,60 @@
 
 <script>
     async function renderVideo() {
-        const input = document.getElementById('script-input');
-        const btn = document.getElementById('render-btn');
-        const canvas = document.getElementById('video-canvas');
-        const loader = document.getElementById('loader');
-        const placeholder = document.getElementById('placeholder');
+    const input = document.getElementById('script-input');
+    const btn = document.getElementById('render-btn');
+    const canvas = document.getElementById('video-canvas');
+    const loader = document.getElementById('loader');
+    const placeholder = document.getElementById('placeholder');
 
-        if (!input.value.trim()) return;
+    const prompt = input.value.trim();
+    if (!prompt) return;
 
-        btn.disabled = true;
-        loader.style.display = 'block';
-        placeholder.style.display = 'none';
-        
-        // Очищаем старое видео
-        const oldSvg = canvas.querySelector('svg');
-        if (oldSvg) oldSvg.remove();
+    // 1. ПОДГОТОВКА (БЕЗ УДАЛЕНИЯ ЛОАДЕРА)
+    btn.disabled = true;
+    loader.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    
+    // Удаляем ТОЛЬКО старый SVG, если он есть
+    const oldSvg = canvas.querySelector('svg');
+    if (oldSvg) oldSvg.remove();
 
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [
-                        { 
-                            role: "system", 
-                            content: `Ты — мастер анимации SVG (SMIL). 
-                            Генерируй ТОЛЬКО код <svg> с использованием тегов <animate>, <animateTransform> или <animateMotion>.
-                            Сделай анимацию зацикленной (repeatCount="indefinite").
-                            Никакого текста, только код в блоке \`\`\`svg.
-                            viewBox="0 0 100 100".` 
-                        },
-                        { role: "user", content: "Создай анимацию: " + input.value }
-                    ]
-                })
-            });
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "Ты — мастер анимации SVG (SMIL). Генерируй ТОЛЬКО код <svg> с анимацией внутри ```svg. Без текста! Сделай анимацию бесконечной." 
+                    },
+                    { role: "user", content: "Анимация: " + prompt }
+                ]
+            })
+        });
 
-            const data = await response.json();
-            const text = data.choices[0].message.content;
-            const svgMatch = text.match(/```svg([\s\S]*?)```/);
+        const data = await response.json();
+        const text = data.choices[0].message.content;
+        const svgMatch = text.match(/```svg([\s\S]*?)```/);
 
-            if (svgMatch && svgMatch[1]) {
-                canvas.innerHTML = svgMatch[1].trim();
-                // Возвращаем скрытый лоадер для следующего раза
-                canvas.insertAdjacentHTML('beforeend', '<div id="loader" class="loader" style="display:none;"></div>');
-            } else {
-                alert("Режиссер уснул. Попробуй еще раз.");
-                placeholder.style.display = 'block';
-            }
-        } catch (e) {
-            alert("Ошибка связи со студией");
-        } finally {
-            loader.style.display = 'none';
-            btn.disabled = false;
+        if (svgMatch && svgMatch[1]) {
+            // 2. ВСТАВЛЯЕМ АККУРАТНО
+            // Используем insertAdjacentHTML, чтобы не трогать существующий в HTML лоадер
+            canvas.insertAdjacentHTML('afterbegin', svgMatch[1].trim());
+        } else {
+            alert("ИИ выдал текст вместо кода. Попробуй еще раз.");
         }
+    } catch (e) {
+        console.error(e);
+        alert("Ошибка связи");
+    } finally {
+        // 3. ЗАВЕРШЕНИЕ
+        loader.style.display = 'none';
+        btn.disabled = false;
     }
+}
 </script>
 
 </body>
