@@ -369,6 +369,13 @@
     chatBox.innerHTML = ''; // Очистка
     chatHistory.forEach(msg => addMessageToChat(msg.content, msg.role === 'assistant' ? 'ai' : 'user'));
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Теперь браузер точно видит все ID
+    renderHistory();
+    // Если есть баннер, его тоже можно инициализировать тут
+});
+
 renderHistory();
 
     function getTime() {
