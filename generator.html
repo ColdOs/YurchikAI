@@ -107,55 +107,65 @@
 
 <script>
     async function generateArt() {
-        const input = document.getElementById('prompt-input');
-        const btn = document.getElementById('gen-btn');
-        const container = document.getElementById('result-container');
-        const placeholder = document.getElementById('svg-placeholder');
-        const loader = document.getElementById('loader');
+    const input = document.getElementById('prompt-input');
+    const btn = document.getElementById('gen-btn');
+    const container = document.getElementById('result-container');
+    const loader = document.getElementById('loader');
 
-        const prompt = input.value.trim();
-        if (!prompt) return;
+    const prompt = input.value.trim();
+    if (!prompt) return;
 
-        // Состояние загрузки
-        btn.disabled = true;
-        placeholder.style.display = 'none';
-        loader.style.display = 'block';
+    // 1. ОЧИСТКА ПЕРЕД ЗАПУСКОМ
+    // Удаляем старый SVG, чтобы он не мешал новому
+    const oldSvg = container.querySelector('svg');
+    if (oldSvg) oldSvg.remove();
+    
+    const placeholder = document.getElementById('svg-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
 
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [
-                        { 
-                            role: "system", 
-                            content: "Ты — SVG дизайнер. Генерируй ТОЛЬКО чистый код SVG в блоке ```svg. Никакого текста. viewBox='0 0 100 100'. Используй красивые градиенты." 
-                        },
-                        { role: "user", content: prompt }
-                    ]
-                })
-            });
+    // Состояние загрузки
+    btn.disabled = true;
+    loader.style.display = 'block';
 
-            const data = await response.json();
-            const text = data.choices[0].message.content;
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "Ты — SVG дизайнер. Генерируй ТОЛЬКО код SVG в блоке ```svg. Без текста!" 
+                    },
+                    { role: "user", content: prompt }
+                ]
+            })
+        });
 
-            // Извлекаем SVG из разметки
-            const svgMatch = text.match(/```svg([\s\S]*?)```/);
-            if (svgMatch && svgMatch[1]) {
-                container.innerHTML = svgMatch[1].trim();
-            } else {
-                alert("Ошибка: ИИ не прислал валидный код. Попробуй еще раз.");
-                placeholder.style.display = 'block';
-            }
-        } catch (error) {
-            console.error(error);
-            alert("Ошибка связи с сервером");
-        } finally {
+        const data = await response.json();
+        const text = data.choices[0].message.content;
+
+        // 2. ВСТАВКА НОВОГО РИСУНКА
+        const svgMatch = text.match(/```svg([\s\S]*?)```/);
+        if (svgMatch && svgMatch[1]) {
+            // Очищаем лоадер и вставляем свежий код
             loader.style.display = 'none';
-            btn.disabled = false;
+            container.innerHTML = svgMatch[1].trim(); 
+            // Добавляем лоадер обратно (скрытым), чтобы он был готов к следующему разу
+            container.insertAdjacentHTML('beforeend', '<div id="loader" class="loader" style="display:none;"></div>');
+        } else {
+            alert("ИИ выдал странный ответ. Попробуй еще раз!");
+            if (placeholder) placeholder.style.display = 'block';
         }
+    } catch (error) {
+        console.error(error);
+        alert("Ошибка сети");
+    } finally {
+        loader.style.display = 'none';
+        btn.disabled = false;
     }
+}
 </script>
 
 </body>
