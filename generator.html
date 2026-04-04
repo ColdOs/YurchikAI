@@ -105,6 +105,12 @@
     <button id="gen-btn" onclick="generateArt()">Создать</button>
 </div>
 
+<button id="save-btn" onclick="saveToGallery()" style="background: #34c759; margin-bottom: 20px; display: none;">⭐️ Сохранить в избранное</button>
+
+<h2 style="text-align: center;">Твоя галерея</h2>
+<div id="gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; width: 90%; padding-bottom: 50px;">
+    </div>
+
 <script>
     async function generateArt() {
     const input = document.getElementById('prompt-input');
@@ -154,6 +160,9 @@
             container.innerHTML = svgMatch[1].trim(); 
             // Добавляем лоадер обратно (скрытым), чтобы он был готов к следующему разу
             container.insertAdjacentHTML('beforeend', '<div id="loader" class="loader" style="display:none;"></div>');
+
+            document.getElementById('save-btn').style.display = 'inline-block'; // Показываем кнопку сохранения
+
         } else {
             alert("ИИ выдал странный ответ. Попробуй еще раз!");
             if (placeholder) placeholder.style.display = 'block';
@@ -166,6 +175,52 @@
         btn.disabled = false;
     }
 }
+
+const GALLERY_KEY = 'yurchik_art_gallery';
+let favoriteArts = JSON.parse(localStorage.getItem(GALLERY_KEY)) || [];
+
+// 1. Функция сохранения
+function saveToGallery() {
+    const container = document.getElementById('result-container');
+    const svg = container.querySelector('svg');
+    
+    if (svg) {
+        const svgCode = svg.outerHTML;
+        // Добавляем в начало массива, чтобы новые были первыми
+        favoriteArts.unshift(svgCode);
+        
+        // Ограничим галерею, например, 20-ю работами
+     //   if (favoriteArts.length > 20) favoriteArts.pop();
+        
+        localStorage.setItem(GALLERY_KEY, JSON.stringify(favoriteArts));
+        renderGallery();
+        alert("Сохранено в галерею!");
+    }
+}
+
+// 2. Функция отрисовки галереи
+function renderGallery() {
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = '';
+    
+    favoriteArts.forEach((svgCode, index) => {
+        const card = document.createElement('div');
+        card.style.cssText = "background: #2c2c2e; border-radius: 10px; padding: 5px; cursor: pointer; border: 1px solid #3a3a3c; position: relative;";
+        card.innerHTML = svgCode;
+        
+        // Клик по картинке в галерее — возвращает её на главный холст
+        card.onclick = () => {
+            document.getElementById('result-container').innerHTML = svgCode;
+            // Возвращаем лоадер (на всякий случай)
+            document.getElementById('result-container').insertAdjacentHTML('beforeend', '<div id="loader" class="loader" style="display:none;"></div>');
+        };
+
+        gallery.appendChild(card);
+    });
+}
+
+// Вызываем отрисовку при загрузке страницы
+renderGallery();
 </script>
 
 </body>
