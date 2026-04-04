@@ -428,6 +428,7 @@ renderHistory();
 
         // 2. Добавляем ответ ИИ в интерфейс и в историю
         addMessageToChat(aiText, 'ai');
+        speak(aiText); //озвучиваем ответ
         chatHistory.push({ role: "assistant", content: aiText });
 
   
@@ -439,6 +440,26 @@ renderHistory();
         console.error("Ошибка:", error);
     }
  }
+
+ function speak(text) {
+    // Проверяем, поддерживает ли браузер синтез речи
+    if (!window.speechSynthesis) return;
+
+    // Останавливаем текущую озвучку, если она уже идет (чтобы не накладывались)
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU'; // Устанавливаем русский язык
+    utterance.rate = 1.0;     // Скорость речи (0.1 до 10)
+    utterance.pitch = 1.0;    // Тональность (0 до 2)
+
+    // Опционально: выбираем более приятный голос, если он есть в системе
+    const voices = window.speechSynthesis.getVoices();
+    const russianVoice = voices.find(voice => voice.lang.includes('ru'));
+    if (russianVoice) utterance.voice = russianVoice;
+
+    window.speechSynthesis.speak(utterance);
+}
 
 function clearChat() {
     // 1. Очищаем локальное хранилище (печеньки/localStorage)
