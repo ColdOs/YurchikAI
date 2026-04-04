@@ -104,56 +104,72 @@
 
 <script>
     async function deployApp() {
-        const input = document.getElementById('app-prompt');
-        const btn = document.getElementById('deploy-btn');
-        const viewport = document.getElementById('app-viewport');
-        const loader = document.getElementById('loader');
-        const status = document.getElementById('status');
+    const input = document.getElementById('app-prompt');
+    const btn = document.getElementById('deploy-btn');
+    const viewport = document.getElementById('app-viewport');
+    const status = document.getElementById('status');
 
-        if (!input.value.trim()) return;
+    // --- ЛОГИКА ЛИМИТА ---
+    const LIMIT_KEY = 'yurchik_cloud_limit';
+    const MAX_APPS = 10;
+    
+    let today = new Date().toLocaleDateString(); // Получаем текущую дату (напр. "24.05.2024")
+    let usage = JSON.parse(localStorage.getItem(LIMIT_KEY)) || { date: today, count: 0 };
 
-        btn.disabled = true;
-        loader.style.display = 'block';
-        status.innerText = 'Нейросеть пишет код...';
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: "openai/gpt-oss-120b",
-                    messages: [
-                        { 
-                            role: "system", 
-                            content: "Ты — Fullstack разработчик. Генерируй ОДИН файл HTML, включающий JS. Твой ответ должен содержать ТОЛЬКО код приложения внутри блока ```html. Приложение должно быть красивым, современным и полностью рабочим. не ограничивайся в размерах." 
-                        },
-                        { role: "user", content: "Создай приложение: " + input.value }
-                    ]
-                })
-            });
-
-            const data = await response.json();
-            const text = data.choices[0].message.content;
-            const htmlMatch = text.match(/```html([\s\S]*?)```/);
-
-            if (htmlMatch && htmlMatch[1]) {
-                const pureHtml = htmlMatch[1].trim();
-                
-                // Магия деплоя: записываем код прямо в iframe
-                const blob = new Blob([pureHtml], { type: 'text/html' });
-                viewport.src = URL.createObjectURL(blob);
-                
-                status.innerText = 'Приложение запущено!';
-            } else {
-                status.innerText = 'Ошибка компиляции кода';
-            }
-        } catch (e) {
-            status.innerText = 'Ошибка сервера';
-        } finally {
-            loader.style.display = 'none';
-            btn.disabled = false;
-        }
+    // Если наступил новый день, сбрасываем счетчик
+    if (usage.date !== today) {
+        usage = { date: today, count: 0 };
     }
+
+    // Проверяем, не исчерпан ли лимит
+    if (usage.count >= MAX_APPS) {
+        status.innerHTML = `<b style="color: #ff3b30;">Лимит исчерпан!</b> (10/10 на сегодня). Приходи завтра.`;
+        alert("На сегодня хватит! GPT 120b дорогой, лимит 10 программ в сутки.");
+        return;
+    }
+    // ---------------------
+
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    btn.disabled = true;
+    status.innerText = `Запуск системы... (Использовано: ${usage.count + 1} из ${MAX_APPS})`;
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: "openai/gpt-oss-120b", // или твой прокси для 120b
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "Ты — Senior Fullstack Developer. Пиши только чистый HTML/JS/CSS код в блоке ```html." 
+                    },
+                    { role: "user", content: prompt }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        const text = data.choices[0].message.content;
+        const htmlMatch = text.match(/```html([\s\S]*?)```/);
+
+        if (htmlMatch && htmlMatch[1]) {
+            // Если деплой успешен — засчитываем попытку
+            usage.count++;
+            localStorage.setItem(LIMIT_KEY, JSON.stringify(usage));
+            
+            const blob = new Blob([htmlMatch[1].trim()], { type: 'text/html' });
+            viewport.src = URL.createObjectURL(blob);
+            status.innerText = `Приложение #${usage.count} развернуто успешно!`;
+        }
+    } catch (e) {
+        status.innerText = 'Ошибка терминала';
+    } finally {
+        btn.disabled = false;
+    }
+}
 </script>
 
 </body>
