@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MD3 Ultra Wide Offline</title>
+    <title>MD3 Ultra Wide Links</title>
     <style>
         :root {
             --color-blue: #0043ef;
             --color-red: #ff0000;
             --color-white: #ffffff;
             --color-yellow: #ffea00;
-            /* Самый широкий и жирный шрифт из доступных в системе */
             --font-main: "Arial Black", Gadget, sans-serif;
             --transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -35,14 +34,14 @@
             width: 100%;
             height: 100%;
             gap: 15px;
-            /* Сетка на 6 частей для кратности 2 и 3 */
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: 1fr 1fr;
         }
 
+        /* Плитка теперь тег <a> */
         .tile {
             position: relative;
-            border-radius: 40px; /* MD3 Style */
+            border-radius: 40px;
             padding: 40px;
             overflow: hidden;
             display: flex;
@@ -50,24 +49,26 @@
             justify-content: flex-start;
             cursor: pointer;
             transition: var(--transition);
+            /* Убираем оформление ссылки */
+            text-decoration: none; 
+            border: none;
+            outline: none;
         }
 
-        /* Масштабирование при наведении */
         .tile:hover {
-            transform: scale(0.99);
+            transform: scale(0.98);
+            filter: brightness(1.1);
         }
 
-        /* Сетка: 2 сверху, 3 снизу */
         .tile-row-1 { grid-column: span 3; }
         .tile-row-2 { grid-column: span 2; }
 
-        /* Цвета */
+        /* Цвета и принудительный цвет текста для ссылок */
         .blue { background-color: var(--color-blue); color: #fff; }
         .red { background-color: var(--color-red); color: #fff; }
         .white { background-color: var(--color-white); color: #000; }
         .yellow { background-color: var(--color-yellow); color: #000; }
 
-        /* Радужная плитка: переливается одним цветом целиком */
         .rainbow {
             animation: rainbow-bg 8s infinite linear;
             color: #fff;
@@ -83,11 +84,10 @@
             100% { background-color: #ff0000; }
         }
 
-        /* Эмблема BETA */
         .beta-badge {
             position: absolute;
             top: 30px;
-            right: 120px; /* Чтобы не мешала иконке */
+            right: 130px;
             background: #ff0000;
             color: white;
             padding: 5px 15px;
@@ -98,7 +98,6 @@
             z-index: 5;
         }
 
-        /* Заголовок (в 3 раза больше обычного) */
         .title {
             font-size: 5rem;
             line-height: 0.9;
@@ -107,7 +106,6 @@
             z-index: 10;
         }
 
-        /* Описание вылетает из-под заголовка */
         .description {
             font-size: 1.8rem;
             margin-top: 15px;
@@ -122,7 +120,6 @@
             transform: translateY(0);
         }
 
-        /* Иконка-эмодзи вылетает из правого верхнего угла */
         .icon {
             position: absolute;
             top: 30px;
@@ -138,7 +135,6 @@
             transform: translate(0, 0);
         }
 
-        /* Адаптив для малых экранов */
         @media (max-width: 900px) {
             .title { font-size: 3rem; }
             .grid-container { grid-template-columns: 1fr; grid-template-rows: repeat(5, 1fr); }
@@ -151,34 +147,34 @@
     <div class="grid-container">
         <a href="https://google.com" class="tile tile-row-1 blue">
             <div class="title">СИНЯЯ</div>
-            <div class="description">ШИРОКИЙ ШРИФТ И ЧИСТЫЙ КОД</div>
+            <div class="description">ПЕРЕЙТИ НА САЙТ 1</div>
             <div class="icon">💧</div>
         </a>
 
-        <div class="tile tile-row-1 rainbow">
+        <a href="#rainbow" class="tile tile-row-1 rainbow">
             <div class="title">РАДУГА</div>
-            <div class="description">ЦВЕТ МЕНЯЕТСЯ ЦЕЛИКОМ</div>
+            <div class="description">ЦВЕТНАЯ ССЫЛКА</div>
             <div class="icon">🌈</div>
-        </div>
+        </a>
 
-        <div class="tile tile-row-2 red">
+        <a href="#red" class="tile tile-row-2 red">
             <div class="title">КРАСНАЯ</div>
-            <div class="description">ВЫЛЕТ ИЗ-ПОД ЗАГОЛОВКА</div>
+            <div class="description">ЭНЕРГИЧНЫЙ КЛИК</div>
             <div class="icon">🔥</div>
-        </div>
+        </a>
 
-        <div class="tile tile-row-2 white">
+        <a href="#beta" class="tile tile-row-2 white">
             <div class="beta-badge">BETA</div>
             <div class="title">БЕЛАЯ</div>
-            <div class="description">С КРАСНОЙ ЭМБЛЕМОЙ ТЕСТА</div>
+            <div class="description">ТЕСТОВАЯ ССЫЛКА</div>
             <div class="icon">🧊</div>
-        </div>
+        </a>
 
-        <div class="tile tile-row-2 yellow">
+        <a href="#yellow" class="tile tile-row-2 yellow">
             <div class="title">ЖЕЛТАЯ</div>
-            <div class="description">МАКСИМАЛЬНАЯ ЯРКОСТЬ</div>
+            <div class="description">ЯРКИЙ ПЕРЕХОД</div>
             <div class="icon">⚡</div>
-        </div>
+        </a>
     </div>
 
 </body>
