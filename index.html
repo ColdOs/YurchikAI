@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Material MD3 Offline Tiles</title>
+    <title>MD3 Ultra Wide Offline</title>
     <style>
         :root {
-            /* Цвета MD3 Saturated */
             --color-blue: #0043ef;
             --color-red: #ff0000;
             --color-white: #ffffff;
             --color-yellow: #ffea00;
-            /* Самый жирный и широкий системный шрифт */
-            --font-wide: "Arial Black", "Arial Bold", Gadget, sans-serif;
-            --transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* Самый широкий и жирный шрифт из доступных в системе */
+            --font-main: "Arial Black", Gadget, sans-serif;
+            --transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         * {
@@ -23,104 +22,99 @@
         }
 
         body {
-            font-family: var(--font-wide);
-            background-color: #121212;
+            font-family: var(--font-main);
+            background-color: #000;
             height: 100vh;
-            overflow: hidden;
-            padding: 20px;
+            padding: 15px;
             display: flex;
+            overflow: hidden;
         }
 
         .grid-container {
             display: grid;
             width: 100%;
             height: 100%;
-            gap: 20px;
+            gap: 15px;
+            /* Сетка на 6 частей для кратности 2 и 3 */
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: 1fr 1fr;
         }
 
-        /* Общие стили плиток */
         .tile {
             position: relative;
-            border-radius: 40px;
+            border-radius: 40px; /* MD3 Style */
             padding: 40px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
             cursor: pointer;
-            text-decoration: none;
             transition: var(--transition);
         }
 
+        /* Масштабирование при наведении */
         .tile:hover {
-            transform: scale(0.98);
+            transform: scale(0.99);
         }
 
-        /* Сетка: 2 в первом ряду, 3 во втором */
-        .tile-2 { grid-column: span 3; }
-        .tile-3 { grid-column: span 2; }
+        /* Сетка: 2 сверху, 3 снизу */
+        .tile-row-1 { grid-column: span 3; }
+        .tile-row-2 { grid-column: span 2; }
 
-        /* Окраска */
-        .blue { background-color: var(--color-blue); color: white; }
-        .red { background-color: var(--color-red); color: white; }
-        .white { background-color: var(--color-white); color: black; }
-        .yellow { background-color: var(--color-yellow); color: black; }
-        
-        .rainbow { 
-            /* Насыщенная радуга на 2/3 экрана */
-            background: linear-gradient(90deg, 
-                #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000);
-            background-size: 150% 100%;
-            animation: rainbow-move 4s linear infinite;
+        /* Цвета */
+        .blue { background-color: var(--color-blue); color: #fff; }
+        .red { background-color: var(--color-red); color: #fff; }
+        .white { background-color: var(--color-white); color: #000; }
+        .yellow { background-color: var(--color-yellow); color: #000; }
+
+        /* Радужная плитка: переливается одним цветом целиком */
+        .rainbow {
+            animation: rainbow-bg 8s infinite linear;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        @keyframes rainbow-bg {
+            0%   { background-color: #ff0000; }
+            20%  { background-color: #ffff00; }
+            40%  { background-color: #00ff00; }
+            60%  { background-color: #00ffff; }
+            80%  { background-color: #0000ff; }
+            100% { background-color: #ff0000; }
+        }
+
+        /* Эмблема BETA */
+        .beta-badge {
+            position: absolute;
+            top: 30px;
+            right: 120px; /* Чтобы не мешала иконке */
+            background: #ff0000;
             color: white;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            transform: rotate(-10deg);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 5;
         }
 
-        @keyframes rainbow-move {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        /* Заголовок (в 3 раза больше) */
+        /* Заголовок (в 3 раза больше обычного) */
         .title {
-            font-size: 4.5rem; /* Примерно в 3 раза больше стандарта */
+            font-size: 5rem;
+            line-height: 0.9;
             font-weight: 900;
             text-transform: uppercase;
-            position: relative;
             z-index: 10;
         }
 
-        /* Иконка в правом верхнем углу */
-        .icon-box {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            width: 80px;
-            height: 80px;
-            opacity: 0;
-            transform: translate(100px, -100px); /* Вылетает из угла */
-            transition: var(--transition);
-        }
-
-        .tile:hover .icon-box {
-            opacity: 1;
-            transform: translate(0, 0);
-        }
-
-        .icon-box svg {
-            width: 100%;
-            height: 100%;
-            fill: currentColor;
-        }
-
-        /* Описание, вылетающее из-под заголовка */
+        /* Описание вылетает из-под заголовка */
         .description {
-            font-size: 1.5rem;
-            margin-top: 20px;
-            max-width: 80%;
+            font-size: 1.8rem;
+            margin-top: 15px;
             opacity: 0;
-            transform: translateY(-50px); /* Спрятано "под" заголовком */
+            transform: translateY(-40px);
             transition: var(--transition);
-            transition-delay: 0.1s;
+            z-index: 5;
         }
 
         .tile:hover .description {
@@ -128,55 +122,62 @@
             transform: translateY(0);
         }
 
-        /* Адаптив для планшетов */
-        @media (max-width: 1024px) {
+        /* Иконка-эмодзи вылетает из правого верхнего угла */
+        .icon {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 6rem;
+            opacity: 0;
+            transform: translate(100px, -100px);
+            transition: var(--transition);
+        }
+
+        .tile:hover .icon {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+
+        /* Адаптив для малых экранов */
+        @media (max-width: 900px) {
             .title { font-size: 3rem; }
-            .grid-container { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
-            .tile-2, .tile-3 { grid-column: span 1; }
+            .grid-container { grid-template-columns: 1fr; grid-template-rows: repeat(5, 1fr); }
+            .tile-row-1, .tile-row-2 { grid-column: span 1; }
         }
     </style>
 </head>
 <body>
 
     <div class="grid-container">
-        <div class="tile tile-2 blue">
+        <div class="tile tile-row-1 blue">
             <div class="title">СИНЯЯ</div>
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
-            </div>
-            <div class="description">МАССИВНЫЙ ТЕКСТ И ПОЛНЫЙ ОФЛАЙН</div>
+            <div class="description">ШИРОКИЙ ШРИФТ И ЧИСТЫЙ КОД</div>
+            <div class="icon">💧</div>
         </div>
 
-        <div class="tile tile-2 rainbow">
+        <div class="tile tile-row-1 rainbow">
             <div class="title">РАДУГА</div>
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,16.5A4.5,4.5 0 0,1 7.5,12A4.5,4.5 0 0,1 12,7.5A4.5,4.5 0 0,1 16.5,12A4.5,4.5 0 0,1 12,16.5Z"/></svg>
-            </div>
-            <div class="description">2/3 СПЕКТРА И ВЫСОКАЯ НАСЫЩЕННОСТЬ</div>
+            <div class="description">ЦВЕТ МЕНЯЕТСЯ ЦЕЛИКОМ</div>
+            <div class="icon">🌈</div>
         </div>
 
-        <div class="tile tile-3 red">
+        <div class="tile tile-row-2 red">
             <div class="title">КРАСНАЯ</div>
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
-            </div>
-            <div class="description">ЭНЕРГИЧНЫЙ ЦВЕТ И ПЛАВНЫЙ ВЫЛЕТ</div>
+            <div class="description">ВЫЛЕТ ИЗ-ПОД ЗАГОЛОВКА</div>
+            <div class="icon">🔥</div>
         </div>
 
-        <div class="tile tile-3 white">
+        <div class="tile tile-row-2 white">
+            <div class="beta-badge">BETA</div>
             <div class="title">БЕЛАЯ</div>
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/></svg>
-            </div>
-            <div class="description">МИНИМАЛИЗМ И ЖИРНЫЙ ШРИФТ</div>
+            <div class="description">С КРАСНОЙ ЭМБЛЕМОЙ ТЕСТА</div>
+            <div class="icon">🧊</div>
         </div>
 
-        <div class="tile tile-3 yellow">
+        <div class="tile tile-row-2 yellow">
             <div class="title">ЖЕЛТАЯ</div>
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7Z"/></svg>
-            </div>
-            <div class="description">ЯРКИЙ АКЦЕНТ В ЛЮБОЕ ВРЕМЯ</div>
+            <div class="description">МАКСИМАЛЬНАЯ ЯРКОСТЬ</div>
+            <div class="icon">⚡</div>
         </div>
     </div>
 
